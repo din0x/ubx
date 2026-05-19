@@ -320,7 +320,7 @@ macro_rules! proto {
                             class: $Message::CLASS,
                             id: $Message::ID,
                             payload,
-                        } => $Message::from_bytes(payload).map(Self::$Message).ok_or(TryFromMessageError(())),
+                        } => $Message::from_payload(payload).map(Self::$Message).ok_or(TryFromMessageError(())),
                     )*
                     _ => Err(TryFromMessageError(())),
                 }
@@ -356,7 +356,7 @@ macro_rules! message {
         $(#[$meta])*
         $vis struct $name {
             $(
-                $field: $Ty,
+                pub $field: $Ty,
             )*
         }
 
@@ -364,15 +364,15 @@ macro_rules! message {
             pub const CLASS: u8 = $class;
             pub const ID: u8 = $id;
 
-            pub fn from_bytes(mut bytes: &[u8]) -> Option<Self> {
+            pub fn from_payload(mut payload: &[u8]) -> Option<Self> {
                 $(
-                    let arr = *bytes.get(..::core::mem::size_of::<$Ty>())?.as_array::<{ ::core::mem::size_of::<$Ty>() }>()?;
+                    let arr = *payload.get(..::core::mem::size_of::<$Ty>())?.as_array::<{ ::core::mem::size_of::<$Ty>() }>()?;
 
                     let $field: $Ty = <$Ty>::from_le_bytes(arr);
-                    bytes = &bytes.get(::core::mem::size_of::<$Ty>()..)?;
+                    payload = &bytes.get(::core::mem::size_of::<$Ty>()..)?;
                 )*
 
-                _ = bytes;
+                _ = payload;
 
                 Some(Self {
                     $(
@@ -391,7 +391,7 @@ macro_rules! message {
                         class: Self::CLASS,
                         id: Self::ID,
                         payload,
-                    } => Self::from_bytes(payload).ok_or(TryFromMessageError(())),
+                    } => Self::from_payload(payload).ok_or(TryFromMessageError(())),
                     _ => Err(TryFromMessageError(())),
                 }
             }
