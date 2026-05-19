@@ -22,6 +22,7 @@ enum State {
     ChecksumB,
 }
 
+/// Raw UBX message returned by the [`Parser`].
 #[derive(Debug, Clone, Copy)]
 pub struct Message<'a> {
     pub class: u8,
@@ -30,6 +31,8 @@ pub struct Message<'a> {
 }
 
 impl<'a> Message<'a> {
+    /// Returns an iterator of bytes in the message.
+    // TODO: Document that the iterator yields sync and checksum bytes
     pub fn into_bytes(self) -> Bytes<'a> {
         Bytes {
             state: State::Sync1,
@@ -41,6 +44,7 @@ impl<'a> Message<'a> {
     }
 }
 
+/// An iterator of bytes in a UBX message.
 pub struct Bytes<'a> {
     state: State,
     payload_i: u16,
@@ -129,6 +133,7 @@ pub enum UbxError {
     ChecksumMismatch,
 }
 
+/// An [UBX](https://docs.sparkfun.com/SparkFun_GNSS_Flex_System/SparkPNT_GNSS_Flex_Module_DAN-F10N/ubx_protocol/) parser.
 #[derive(Debug)]
 pub struct Parser<'a> {
     state: State,
@@ -148,6 +153,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
+    /// Returns a parser given the payload buffer.
     pub fn new(buf: &'a mut [u8]) -> Self {
         Self {
             state: State::Sync1,
@@ -167,6 +173,10 @@ impl<'a> Parser<'a> {
         self.checksum = Checksum::new();
     }
 
+    /// Feed a byte to the parser.
+    /// 
+    /// When the UBX packet is malformed this method will return an [`Err`] and reset
+    /// the parser. No special handling of the error is needed.
     pub fn feed(&mut self, byte: u8) -> Result<Option<Message<'_>>, UbxError> {
         match self.state {
             State::Sync1 if byte == 0xb5 => {
@@ -270,6 +280,7 @@ impl<'a> Parser<'a> {
     }
 }
 
+/// Represents the checksum of the UBX packet.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Checksum {
     pub a: u8,
@@ -277,16 +288,19 @@ pub struct Checksum {
 }
 
 impl Checksum {
+    /// Returns a zeroed checksum.
     pub fn new() -> Self {
         Self { a: 0, b: 0 }
     }
 
+    /// Returns a checksum given an iterator of bytes.
     pub fn from_iter(i: impl IntoIterator<Item = u8>) -> Self {
         let mut checksum = Self::new();
         i.into_iter().for_each(|b| checksum.feed(b));
         checksum
     }
 
+    /// Update the checksum given a byte.
     pub fn feed(&mut self, byte: u8) {
         self.a = self.a.wrapping_add(byte);
         self.b = self.b.wrapping_add(self.a);
@@ -399,6 +413,7 @@ macro_rules! message {
     };
 }
 
+/// The error type return when conversion from a raw [`Message`] to typed UBX message fails.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TryFromMessageError(());
 
