@@ -1,6 +1,6 @@
 //! Example of parsing NavPosllh packets.
 
-use ubx::{Parser, NavPosllh};
+use ubx::{NavPosllh, Parser};
 
 fn main() {
     let mut bytes = Vec::new();
