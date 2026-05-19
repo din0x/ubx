@@ -125,6 +125,7 @@ impl Iterator for Bytes<'_> {
     }
 }
 
+/// The error return by the parser when a packet is malformed.
 #[derive(Debug)]
 pub enum UbxError {
     Sync1Mismatch,
@@ -133,7 +134,7 @@ pub enum UbxError {
     ChecksumMismatch,
 }
 
-/// An [UBX](https://docs.sparkfun.com/SparkFun_GNSS_Flex_System/SparkPNT_GNSS_Flex_Module_DAN-F10N/ubx_protocol/) parser.
+/// [UBX](https://docs.sparkfun.com/SparkFun_GNSS_Flex_System/SparkPNT_GNSS_Flex_Module_DAN-F10N/ubx_protocol/) parser.
 #[derive(Debug)]
 pub struct Parser<'a> {
     state: State,
@@ -153,7 +154,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    /// Returns a parser given the payload buffer.
+    /// Returns a parser given a payload buffer.
     pub fn new(buf: &'a mut [u8]) -> Self {
         Self {
             state: State::Sync1,
@@ -173,7 +174,7 @@ impl<'a> Parser<'a> {
         self.checksum = Checksum::new();
     }
 
-    /// Feed a byte to the parser.
+    /// Feeds a byte to the parser.
     /// 
     /// When the UBX packet is malformed this method will return an [`Err`] and reset
     /// the parser. No special handling of the error is needed.
@@ -280,7 +281,7 @@ impl<'a> Parser<'a> {
     }
 }
 
-/// Represents the checksum of the UBX packet.
+/// Represents the checksum of a UBX packet.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Checksum {
     pub a: u8,
@@ -300,7 +301,7 @@ impl Checksum {
         checksum
     }
 
-    /// Update the checksum given a byte.
+    /// Updates the checksum given a byte.
     pub fn feed(&mut self, byte: u8) {
         self.a = self.a.wrapping_add(byte);
         self.b = self.b.wrapping_add(self.a);
