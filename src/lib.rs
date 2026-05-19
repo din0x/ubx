@@ -369,7 +369,7 @@ macro_rules! message {
                     let arr = *payload.get(..::core::mem::size_of::<$Ty>())?.as_array::<{ ::core::mem::size_of::<$Ty>() }>()?;
 
                     let $field: $Ty = <$Ty>::from_le_bytes(arr);
-                    payload = &bytes.get(::core::mem::size_of::<$Ty>()..)?;
+                    payload = &payload.get(::core::mem::size_of::<$Ty>()..)?;
                 )*
 
                 _ = payload;
