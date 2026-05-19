@@ -308,6 +308,11 @@ impl Checksum {
     }
 }
 
+/// Defines the supported UBX protocol subset.
+///
+/// Most of the time you only care about a few UBX messages. This macro allows you to define
+/// which messages are captured. Useful for minimizing codegen.
+#[macro_export]
 macro_rules! proto {
     (
         $(#[$meta:meta])*
