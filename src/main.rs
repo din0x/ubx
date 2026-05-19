@@ -52,12 +52,12 @@ struct Bytes<'a> {
 
 impl Iterator for Bytes<'_> {
     type Item = u8;
-    
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.finished {
             return None;
         }
-    
+
         match self.state {
             State::Sync1 => {
                 self.state = State::Sync2;
@@ -90,9 +90,9 @@ impl Iterator for Bytes<'_> {
                 } else {
                     self.state = State::Payload;
                 }
-                
+
                 let byte = ((self.message.payload.len() >> 8) & 0xff) as u8;
-                
+
                 self.checksum.feed(byte);
                 Some(byte)
             }
@@ -100,9 +100,9 @@ impl Iterator for Bytes<'_> {
                 let Some(&byte) = self.message.payload.get(self.payload_i as usize) else {
                     unreachable!();
                 };
-                
+
                 self.payload_i += 1;
-    
+
                 if self.message.payload.len() == self.payload_i as usize {
                     self.state = State::ChecksumA;
                 }
@@ -281,7 +281,7 @@ impl Checksum {
     pub fn new() -> Self {
         Self { a: 0, b: 0 }
     }
-    
+
     pub fn from_iter(i: impl IntoIterator<Item = u8>) -> Self {
         let mut checksum = Self::new();
         i.into_iter().for_each(|b| checksum.feed(b));
@@ -301,7 +301,7 @@ fn main() {
     //     id: 0xf1,
     //     payload: &[0x1, 0x2, 0x3, 0x4],
     // };
-    
+
     // let bytes: Vec<u8> = message.into_bytes().collect();
 
     let mut bytes = Vec::new();
@@ -320,7 +320,6 @@ fn main() {
     for byte in bytes {
         match parser.feed(byte) {
             Ok(Some(message)) => {
-                
                 let nav_posllh = Proto::try_from(message);
                 _ = dbg!(nav_posllh);
             }
@@ -348,10 +347,10 @@ macro_rules! proto {
                 $Message($Message),
             )*
         }
-        
+
         impl<'a> ::core::convert::TryFrom<Message<'a>> for $name {
             type Error = TryFromMessageError;
-            
+
             fn try_from(value: Message<'a>) -> Result<$name, Self::Error> {
                 match value {
                     $(
@@ -368,7 +367,6 @@ macro_rules! proto {
     };
 }
 
-
 proto! {
     #[derive(Debug)]
     pub enum Proto {
@@ -384,7 +382,7 @@ macro_rules! message {
     (
     const CLASS = $class:literal;
     const ID = $id:literal;
-    
+
     $(#[$meta:meta])*
     $vis:vis struct $name:ident {
         $(
@@ -421,10 +419,10 @@ macro_rules! message {
                 })
             }
         }
-        
+
         impl<'a> ::core::convert::TryFrom<Message<'a>> for $name {
             type Error = TryFromMessageError;
-            
+
             fn try_from(value: Message<'a>) -> Result<$name, Self::Error> {
                 match value {
                     Message {
@@ -514,7 +512,6 @@ message! {
         valid: u8,
     }
 }
-
 
 pub const UBX_NAV_POSLLH: [u8; 36] = [
     0xb5, 0x62, //              sync
