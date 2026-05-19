@@ -23,11 +23,10 @@ enum State {
 }
 
 #[derive(Debug, Clone, Copy)]
-#[allow(dead_code)]
-struct Message<'a> {
-    class: u8,
-    id: u8,
-    payload: &'a [u8],
+pub struct Message<'a> {
+    pub class: u8,
+    pub id: u8,
+    pub payload: &'a [u8],
 }
 
 impl<'a> Message<'a> {
@@ -42,7 +41,7 @@ impl<'a> Message<'a> {
     }
 }
 
-struct Bytes<'a> {
+pub struct Bytes<'a> {
     state: State,
     payload_i: u16,
     message: Message<'a>,
@@ -123,7 +122,7 @@ impl Iterator for Bytes<'_> {
 }
 
 #[derive(Debug)]
-enum UbxError {
+pub enum UbxError {
     Sync1Mismatch,
     Sync2Mismatch,
     PayloadBufferOverflow,
@@ -131,7 +130,7 @@ enum UbxError {
 }
 
 #[derive(Debug)]
-struct Parser<'a> {
+pub struct Parser<'a> {
     state: State,
     checksum: Checksum,
 
@@ -272,9 +271,9 @@ impl<'a> Parser<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-struct Checksum {
-    a: u8,
-    b: u8,
+pub struct Checksum {
+    pub a: u8,
+    pub b: u8,
 }
 
 impl Checksum {
@@ -291,43 +290,6 @@ impl Checksum {
     pub fn feed(&mut self, byte: u8) {
         self.a = self.a.wrapping_add(byte);
         self.b = self.b.wrapping_add(self.a);
-    }
-}
-
-// TODO: Remove main() in favour of /examples
-fn main() {
-    // let message = Message {
-    //     class: 0xf0,
-    //     id: 0xf1,
-    //     payload: &[0x1, 0x2, 0x3, 0x4],
-    // };
-
-    // let bytes: Vec<u8> = message.into_bytes().collect();
-
-    let mut bytes = Vec::new();
-    bytes.push(0x12);
-    bytes.extend(UBX_NAV_POSLLH);
-    bytes.extend(UBX_NAV_POSLLH);
-    bytes.push(0x67);
-    bytes.push(0x12);
-    bytes.push(0x3);
-    bytes.extend(UBX_NAV_POSLLH);
-    bytes.extend(UBX_NAV_POSLLH);
-
-    let mut buf = [0; 64];
-    let mut parser = Parser::new(&mut buf);
-
-    for byte in bytes {
-        match parser.feed(byte) {
-            Ok(Some(message)) => {
-                let nav_posllh = Proto::try_from(message);
-                _ = dbg!(nav_posllh);
-            }
-            Ok(None) => {}
-            Err(err) => {
-                dbg!(err);
-            }
-        }
     }
 }
 
@@ -512,17 +474,3 @@ message! {
         valid: u8,
     }
 }
-
-pub const UBX_NAV_POSLLH: [u8; 36] = [
-    0xb5, 0x62, //              sync
-    0x01, 0x02, //              class = NAV, id = POSLLH
-    0x1c, 0x00, //              length = 28 bytes
-    0xe0, 0x93, 0x04, 0x00, //  itow
-    0x08, 0xfe, 0x83, 0x16, //  long
-    0x30, 0x48, 0x08, 0x18, //  lat
-    0x5c, 0x1b, 0x0a, 0x00, //  height
-    0xa0, 0x19, 0x0a, 0x00, //  hmsl
-    0x34, 0x12, 0x00, 0x00, //  hacc
-    0x78, 0x56, 0x00, 0x00, //  vacc
-    0x25, 0xc9, //              checksum
-];
